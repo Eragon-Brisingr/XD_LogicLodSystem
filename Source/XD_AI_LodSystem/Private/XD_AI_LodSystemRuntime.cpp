@@ -7,6 +7,7 @@
 #include <AssetRegistryModule.h>
 #include <IAssetRegistry.h>
 #include <Misc/PackageName.h>
+#include <Internationalization/Regex.h>
 
 #include "XD_AI_LodSystemSettings.h"
 #include "XD_AI_LodWorldCollection.h"
@@ -16,6 +17,11 @@
 #include "XD_AI_LodSystem_Log.h"
 
 #define LOCTEXT_NAMESPACE "XD_AI_LodSystem"
+
+UXD_AI_LodSystemRuntime::UXD_AI_LodSystemRuntime()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+}
 
 void UXD_AI_LodSystemRuntime::WhenGameInit_Implementation()
 {
@@ -31,6 +37,7 @@ void UXD_AI_LodSystemRuntime::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SetComponentTickEnabled(IsServer());
 }
 
 void UXD_AI_LodSystemRuntime::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -55,11 +62,6 @@ void UXD_AI_LodSystemRuntime::TickComponent(float DeltaTime, enum ELevelTick Tic
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (!IsServer())
-	{
-		return;
-	}
-
 	for (TPair<FName, FXD_AI_LodLevelUnit>& Pair : AI_LodLevelUnits)
 	{
 		FXD_AI_LodLevelUnit& AI_LodLevelUnit = Pair.Value;
@@ -83,17 +85,24 @@ void UXD_AI_LodSystemRuntime::InitAI_LodSystem()
 		IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
 		TArray<FAssetData> AI_LodLevelBuiltDataAssets;
 		AssetRegistry.GetAssetsByClass(UXD_AI_LodLevelBuiltData::StaticClass()->GetFName(), AI_LodLevelBuiltDataAssets);
+		const UXD_AI_LodSystemSettings* AI_LodSystemSettings = GetDefault<UXD_AI_LodSystemSettings>();
 		for (const FAssetData& AI_LodLevelBuiltDataAsset : AI_LodLevelBuiltDataAssets)
 		{
 			UXD_AI_LodLevelBuiltData* AI_LodLevelBuiltData = CastChecked<UXD_AI_LodLevelBuiltData>(AI_LodLevelBuiltDataAsset.GetAsset());
+			if (AI_LodSystemSettings->ValidLevelPattern.Len() > 0 && FRegexMatcher(AI_LodSystemSettings->ValidLevelPattern, AI_LodLevelBuiltDataAsset.PackagePath.ToString()).FindNext() == false)
+			{
+				continue;
+			}
 			FString LevelName = FPackageName::GetShortFName(AI_LodLevelBuiltData->GetOutermost()->GetName()).ToString();
 			// 17为_AI_LodBuiltData的长度
 			constexpr int32 Len_AI_LodData = 17;
 			LevelName = LevelName.Left(LevelName.Len() - Len_AI_LodData + 1);
 			FXD_AI_LodLevelUnit& AI_LodLevelUnit = AI_LodLevelUnits.Add(*LevelName);
+			AI_LodLevelUnit.SavedWorldOrigin = AI_LodLevelBuiltData->SavedWorldOrigin;
 			for (UXD_AI_LodUnitBase* AI_LodUnitTemplate : AI_LodLevelBuiltData->AI_LodUnits)
 			{
 				UXD_AI_LodUnitBase* AI_LodUnit = ::DuplicateObject(AI_LodUnitTemplate, this, AI_LodUnitTemplate->GetFName());
+				AI_LodUnit->LodSystemRuntime = this;
 				AI_LodLevelUnit.AI_LodUnits.Add(AI_LodUnit);
 			}
 			XD_AI_LodSystem_Display_LOG("  注册关卡[%s]进AI_Lod系统", *LevelName);
@@ -109,13 +118,23 @@ void UXD_AI_LodSystemRuntime::InitAI_LodSystem()
 
 void UXD_AI_LodSystemRuntime::WhenLevelInited(ULevel* Level)
 {
+	check(Level->GetWorld()->IsServer());
+
+	const UXD_AI_LodSystemSettings* AI_LodSystemSettings = GetDefault<UXD_AI_LodSystemSettings>();
+	if (AI_LodSystemSettings->ValidLevelPattern.Len() > 0 && FRegexMatcher(AI_LodSystemSettings->ValidLevelPattern, Level->GetOuter()->GetFullName()).FindNext() == false)
+	{
+		return;
+	}
+
 	if (UXD_AI_LodLevelCollection* AI_LodLevelCollection = Level->GetAssetUserData<UXD_AI_LodLevelCollection>())
 	{
 		FName LevelName = FAI_LodSystemUtils::GetLevelName(Level);
 		FXD_AI_LodLevelUnit& AI_LodLevelUnit = AI_LodLevelUnits.FindOrAdd(LevelName);
+		AI_LodLevelUnit.SavedWorldOrigin = AI_LodLevelCollection->SavedWorldOrigin;
 		for (UXD_AI_LodUnitBase* AI_LodUnitTemplate : AI_LodLevelCollection->AI_LodUnits)
 		{
 			UXD_AI_LodUnitBase* AI_LodUnit = ::DuplicateObject(AI_LodUnitTemplate, this, AI_LodUnitTemplate->GetFName());
+			AI_LodUnit->LodSystemRuntime = this;
 			AI_LodLevelUnit.AI_LodUnits.Add(AI_LodUnit);
 		}
 		if (AI_LodLevelCollection->AI_LodUnits.Num() > 0)
@@ -124,13 +143,26 @@ void UXD_AI_LodSystemRuntime::WhenLevelInited(ULevel* Level)
 		}
 	}
 
-	WhenLevelLoaded(Level);
+	SyncLevelUnitToInstance(Level, true);
 }
 
 void UXD_AI_LodSystemRuntime::WhenLevelLoaded(ULevel* Level)
 {
 	check(Level->GetWorld()->IsServer());
 
+	for (const TPair<FName, FXD_AI_LodLevelUnit>& Pair : AI_LodLevelUnits)
+	{
+		for (UXD_AI_LodUnitBase* AI_LodUnit : Pair.Value.AI_LodUnits)
+		{
+			AI_LodUnit->LodSystemRuntime = this;
+		}
+	}
+
+	SyncLevelUnitToInstance(Level, false);
+}
+
+void UXD_AI_LodSystemRuntime::SyncLevelUnitToInstance(ULevel* Level, bool IsInit)
+{
 	FName LevelName = FAI_LodSystemUtils::GetLevelName(Level);
 	if (FXD_AI_LodLevelUnit* AI_LodLevelUnit = AI_LodLevelUnits.Find(LevelName))
 	{
@@ -140,7 +172,7 @@ void UXD_AI_LodSystemRuntime::WhenLevelLoaded(ULevel* Level)
 
 		for (UXD_AI_LodUnitBase* AI_LodUnit : AI_LodLevelUnit->AI_LodUnits)
 		{
-			AI_LodUnit->SyncToInstance(Level);
+			AI_LodUnit->SyncToInstance(Level, IsInit, *AI_LodLevelUnit);
 			AActor* Instance = AI_LodUnit->AI_Instance.Get();
 			check(Instance);
 			Instance->OnDestroyed.AddDynamic(this, &UXD_AI_LodSystemRuntime::WhenInstanceDestroyed);
@@ -152,11 +184,13 @@ void UXD_AI_LodSystemRuntime::WhenLevelPreUnload(ULevel* Level)
 {
 	check(Level->GetWorld()->IsServer());
 
+	UWorld* World = Level->GetWorld();
 	FName LevelName = FAI_LodSystemUtils::GetLevelName(Level);
 	if (FXD_AI_LodLevelUnit* AI_LodLevelUnit = AI_LodLevelUnits.Find(LevelName))
 	{
 		FEditorScriptExecutionGuard ScriptGuard;
 		AI_LodLevelUnit->bIsLevelLoaded = false;
+		AI_LodLevelUnit->SavedWorldOrigin = World->OriginLocation;
 		XD_AI_LodSystem_Display_LOG("关卡[%s]将要卸载，更新的所有实例至AI_LodUnit", *LevelName.ToString());
 
 		for (UXD_AI_LodUnitBase* AI_LodUnit : AI_LodLevelUnit->AI_LodUnits)
@@ -180,6 +214,7 @@ void UXD_AI_LodSystemRuntime::WhenActorSpawned(AActor* Actor)
 		{
 			check(!AI_LodLevelUnit.AI_LodUnits.ContainsByPredicate([&](UXD_AI_LodUnitBase* E) {return E->AI_Instance.Get() == Actor; }));
 			UXD_AI_LodUnitBase* AI_LodUnit = IXD_AI_LodInstanceInterface::CreateAI_LodUnit(Actor, this);
+			AI_LodUnit->LodSystemRuntime = this;
 			AI_LodLevelUnit.AI_LodUnits.Add(AI_LodUnit);
 			XD_AI_LodSystem_Display_LOG("AI实例[%s]实例化，自动注册进AI_Lod系统的关卡[%s]", *Actor->GetName(), *LevelName.ToString());
 			Actor->OnDestroyed.AddDynamic(this, &UXD_AI_LodSystemRuntime::WhenInstanceDestroyed);

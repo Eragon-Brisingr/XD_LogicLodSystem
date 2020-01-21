@@ -12,5 +12,6 @@ UXD_AI_LodUnitBase* IXD_AI_LodInstanceInterface::CreateAI_LodUnit(AActor* Actor,
 
 	UXD_AI_LodUnitBase* AI_LodUnit = Execute_CreateAI_LodUnit((UObject*)Actor, Outer);
 	AI_LodUnit->AI_Instance = Actor;
+	AI_LodUnit->SyncToLodUnit();
 	return AI_LodUnit;
 }

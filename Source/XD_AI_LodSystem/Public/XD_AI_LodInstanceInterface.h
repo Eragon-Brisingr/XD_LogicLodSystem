@@ -42,14 +42,4 @@ public:
 	EAI_LodSystemRegisterType GetRegisterType() const;
 	virtual EAI_LodSystemRegisterType GetRegisterType_Implementation() const { return EAI_LodSystemRegisterType::LevelInit; }
 	static EAI_LodSystemRegisterType GetRegisterType(AActor* Actor) { return Execute_GetRegisterType((UObject*)Actor); }
-
-	UFUNCTION(BlueprintnativeEvent, Category = "AI|Lod")
-	void SyncToInstance(const UXD_AI_LodUnitBase* AI_LodUnit);
-	virtual void SyncToInstance_Implementation(const UXD_AI_LodUnitBase* AI_LodUnit) {}
-	static void SyncToInstance(AActor* Actor, const UXD_AI_LodUnitBase* AI_LodUnit) { Execute_SyncToInstance((UObject*)Actor, AI_LodUnit); }
-
-	UFUNCTION(BlueprintnativeEvent, Category = "AI|Lod")
-	void SyncToLodUnit(UXD_AI_LodUnitBase* AI_LodUnit) const;
-	virtual void SyncToLodUnit_Implementation(UXD_AI_LodUnitBase* AI_LodUnit) const {}
-	static void SyncToLodUnit(const AActor* Actor, UXD_AI_LodUnitBase* AI_LodUnit) { Execute_SyncToLodUnit((UObject*)Actor, AI_LodUnit); }
 };

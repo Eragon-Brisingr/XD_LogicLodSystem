@@ -17,6 +17,9 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	TArray<UXD_AI_LodUnitBase*> AI_LodUnits;
 
+	UPROPERTY(VisibleAnywhere)
+	FIntVector SavedWorldOrigin;
+
 	uint8 bIsLevelLoaded : 1;
 };
 
@@ -26,6 +29,8 @@ class XD_AI_LODSYSTEM_API UXD_AI_LodSystemRuntime : public UActorComponent,
 {
 	GENERATED_BODY()
 public:
+	UXD_AI_LodSystemRuntime();
+
 	void WhenGameInit_Implementation() override;
 	void WhenPostLoad_Implementation() override;
 
@@ -37,6 +42,8 @@ private:
 	void InitAI_LodSystem();
 	void WhenLevelInited(ULevel* Level);
 	void WhenLevelLoaded(ULevel* Level);
+	void SyncLevelUnitToInstance(ULevel* Level, bool IsInit);
+
 	void WhenLevelPreUnload(ULevel* Level);
 
 	FDelegateHandle OnActorSpawnedHandler;

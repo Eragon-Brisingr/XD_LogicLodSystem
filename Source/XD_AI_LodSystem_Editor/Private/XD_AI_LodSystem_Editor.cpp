@@ -5,6 +5,7 @@
 #include <Engine/Level.h>
 #include <Modules/ModuleManager.h>
 #include <ISettingsModule.h>
+#include <Internationalization/Regex.h>
 
 #include "XD_AI_LodInstanceInterface.h"
 #include "XD_AI_LodWorldCollection.h"
@@ -57,16 +58,12 @@ void FXD_AI_LodSystem_EditorModule::ShutdownModule()
 
 void FXD_AI_LodSystem_EditorModule::CollectAI_LodUnit(UWorld* World)
 {
-// 	if (UXD_AI_LodWorldCollection* AI_LodWorldCollection = GetDefault<UXD_AI_LodSystemSettings>()->AI_LodWorldCollection.LoadSynchronous())
-// 	{
-//		AI_LodWorldCollection->Modify();
-//		AI_LodWorldCollection->MarkPackageDirty();
-// 	}
-// 	else
-// 	{
-// 		XD_AI_LodSystem_Warning_LOG("未配置XD_AI_LodSystemSettings中的AI_LodWorldCollection");
-// 	}
+	const UXD_AI_LodSystemSettings* AI_LodSystemSettings = GetDefault<UXD_AI_LodSystemSettings>();
 	ULevel* Level = World->GetCurrentLevel();
+	if (AI_LodSystemSettings->ValidLevelPattern.Len() > 0 && FRegexMatcher(AI_LodSystemSettings->ValidLevelPattern, Level->GetPathName()).FindNext() == false)
+	{
+		return;
+	}
 
 	UXD_AI_LodLevelCollection* AI_LodLevelCollection = Level->GetAssetUserData<UXD_AI_LodLevelCollection>();
 	if (AI_LodLevelCollection == nullptr)
@@ -74,6 +71,8 @@ void FXD_AI_LodSystem_EditorModule::CollectAI_LodUnit(UWorld* World)
 		AI_LodLevelCollection = NewObject<UXD_AI_LodLevelCollection>(Level);
 		Level->AddAssetUserData(AI_LodLevelCollection);
 	}
+
+	AI_LodLevelCollection->SavedWorldOrigin = World->OriginLocation;
 
 	TArray<UXD_AI_LodUnitBase*> WorldInitAI_LodUnits;
 	TArray<UXD_AI_LodUnitBase*> LevelInitAI_LodUnits;
@@ -94,7 +93,7 @@ void FXD_AI_LodSystem_EditorModule::CollectAI_LodUnit(UWorld* World)
 					FName ShortPackageName = FPackageName::GetShortFName(BuiltDataPackage->GetFName());
 					// Top level UObjects have to have both RF_Standalone and RF_Public to be saved into packages
 					AI_LodLevelCollection->AI_LodLevelBuiltData = NewObject<UXD_AI_LodLevelBuiltData>(BuiltDataPackage, ShortPackageName, RF_Standalone | RF_Public);
-					// MarkPackageDirty();
+					AI_LodLevelCollection->AI_LodLevelBuiltData->SavedWorldOrigin = World->OriginLocation;
 				}
 				UXD_AI_LodUnitBase* AI_LodUnit = IXD_AI_LodInstanceInterface::CreateAI_LodUnit(Actor, AI_LodLevelCollection->AI_LodLevelBuiltData);
 				WorldInitAI_LodUnits.Add(AI_LodUnit);

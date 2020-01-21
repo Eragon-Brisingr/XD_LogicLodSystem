@@ -17,6 +17,9 @@ class XD_AI_LODSYSTEM_API UXD_AI_LodLevelBuiltData : public UObject
 public:
 	UPROPERTY(VisibleAnywhere)
 	TArray<UXD_AI_LodUnitBase*> AI_LodUnits;
+
+	UPROPERTY(VisibleAnywhere)
+	FIntVector SavedWorldOrigin;
 };
 
 // 用于搜集每个关卡的AI_LodUnit
@@ -30,6 +33,9 @@ public:
 
 	UPROPERTY(NonPIEDuplicateTransient)
 	UXD_AI_LodLevelBuiltData* AI_LodLevelBuiltData;
+
+	UPROPERTY(VisibleAnywhere)
+	FIntVector SavedWorldOrigin;
 };
 
 // 整个世界的AI_Lod配置

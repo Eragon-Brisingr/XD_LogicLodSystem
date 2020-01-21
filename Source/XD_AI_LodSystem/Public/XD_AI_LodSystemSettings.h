@@ -15,5 +15,5 @@ class XD_AI_LODSYSTEM_API UXD_AI_LodSystemSettings : public UObject
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, Config)
-	TSoftObjectPtr<UXD_AI_LodWorldCollection> AI_LodWorldCollection;
+	FString ValidLevelPattern;
 };
