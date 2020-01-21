@@ -39,7 +39,12 @@ void FXD_AI_LodSystem_EditorModule::StartupModule()
 
 	PostSaveWorldHandle = FEditorDelegates::PreSaveWorld.AddLambda([this](uint32 SaveFlags, UWorld* World)
 		{
-			CollectAI_LodUnit(World);
+			// 防止打包时报错
+			constexpr ESaveFlags PackageFlags = ESaveFlags(SAVE_KeepGUID | SAVE_Async | SAVE_Unversioned | SAVE_ComputeHash);
+			if (SaveFlags != PackageFlags)
+			{
+				CollectAI_LodUnit(World);
+			}
 		});
 }
 
