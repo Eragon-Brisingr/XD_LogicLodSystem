@@ -87,7 +87,7 @@ void FXD_AI_LodSystem_EditorModule::CollectAI_LodUnit(UWorld* World)
 			{
 				if (AI_LodLevelCollection->AI_LodLevelBuiltData == nullptr)
 				{
-					FString PackageName = Level->GetOutermost()->GetName() + TEXT("_AI_LodBuiltData");
+					FString PackageName = Level->GetOutermost()->GetName() + TEXT("_AI_LodData");
 					UPackage* BuiltDataPackage = CreatePackage(nullptr, *PackageName);
 					// PKG_ContainsMapData required so FEditorFileUtils::GetDirtyContentPackages can treat this as a map package
 					BuiltDataPackage->SetPackageFlags(PKG_ContainsMapData);

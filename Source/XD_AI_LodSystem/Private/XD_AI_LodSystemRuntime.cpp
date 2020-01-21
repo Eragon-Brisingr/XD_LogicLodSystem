@@ -88,8 +88,8 @@ void UXD_AI_LodSystemRuntime::InitAI_LodSystem()
 			UXD_AI_LodLevelBuiltData* AI_LodLevelBuiltData = CastChecked<UXD_AI_LodLevelBuiltData>(AI_LodLevelBuiltDataAsset.GetAsset());
 			FString LevelName = FPackageName::GetShortFName(AI_LodLevelBuiltData->GetOutermost()->GetName()).ToString();
 			// 17为_AI_LodBuiltData的长度
-			constexpr int32 Len_AI_LodBuiltData = 17;
-			LevelName = LevelName.Left(LevelName.Len() - Len_AI_LodBuiltData + 1);
+			constexpr int32 Len_AI_LodData = 17;
+			LevelName = LevelName.Left(LevelName.Len() - Len_AI_LodData + 1);
 			FXD_AI_LodLevelUnit& AI_LodLevelUnit = AI_LodLevelUnits.Add(*LevelName);
 			for (UXD_AI_LodUnitBase* AI_LodUnitTemplate : AI_LodLevelBuiltData->AI_LodUnits)
 			{
