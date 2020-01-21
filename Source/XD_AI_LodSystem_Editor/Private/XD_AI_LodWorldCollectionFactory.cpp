@@ -10,6 +10,7 @@
 
 UXD_AI_LodWorldCollectionFactory::UXD_AI_LodWorldCollectionFactory()
 {
+	// AI_LodWorldCollection现在没用
 	SupportedClass = UXD_AI_LodWorldCollection::StaticClass();
 	bCreateNew = false;
 	bEditAfterNew = true;

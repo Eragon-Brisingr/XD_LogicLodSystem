@@ -36,12 +36,9 @@ void FXD_AI_LodSystem_EditorModule::StartupModule()
 		);
 	}
 
-	PostSaveWorldHandle = FEditorDelegates::PostSaveWorld.AddLambda([this](uint32 SaveFlags, UWorld* World, bool bSuccess)
+	PostSaveWorldHandle = FEditorDelegates::PreSaveWorld.AddLambda([this](uint32 SaveFlags, UWorld* World)
 		{
-			if (bSuccess)
-			{
-				CollectAI_LodUnit(World);
-			}
+			CollectAI_LodUnit(World);
 		});
 }
 
@@ -50,7 +47,7 @@ void FXD_AI_LodSystem_EditorModule::ShutdownModule()
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
 
-	FEditorDelegates::PostSaveWorld.Remove(PostSaveWorldHandle);
+	FEditorDelegates::PreSaveWorld.Remove(PostSaveWorldHandle);
 
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
@@ -60,32 +57,68 @@ void FXD_AI_LodSystem_EditorModule::ShutdownModule()
 
 void FXD_AI_LodSystem_EditorModule::CollectAI_LodUnit(UWorld* World)
 {
-	if (UXD_AI_LodWorldCollection* AI_LodWorldCollection = GetDefault<UXD_AI_LodSystemSettings>()->AI_LodWorldCollection.LoadSynchronous())
+// 	if (UXD_AI_LodWorldCollection* AI_LodWorldCollection = GetDefault<UXD_AI_LodSystemSettings>()->AI_LodWorldCollection.LoadSynchronous())
+// 	{
+//		AI_LodWorldCollection->Modify();
+//		AI_LodWorldCollection->MarkPackageDirty();
+// 	}
+// 	else
+// 	{
+// 		XD_AI_LodSystem_Warning_LOG("未配置XD_AI_LodSystemSettings中的AI_LodWorldCollection");
+// 	}
+	ULevel* Level = World->GetCurrentLevel();
+
+	UXD_AI_LodLevelCollection* AI_LodLevelCollection = Level->GetAssetUserData<UXD_AI_LodLevelCollection>();
+	if (AI_LodLevelCollection == nullptr)
 	{
-		ULevel* Level = World->GetCurrentLevel();
-		FName LevelFullName = Level->GetOutermost()->GetFName();
-		TMap<FName, FXD_AI_LodLevelCollection>& AI_LodLevelCollections = AI_LodWorldCollection->AI_LodLevelCollections;
-		FXD_AI_LodLevelCollection& AI_LodLevelCollection = AI_LodLevelCollections.FindOrAdd(LevelFullName);
-		TArray<UXD_AI_LodUnitBase*>& AI_LodUnits = AI_LodLevelCollection.AI_LodUnits;
-		AI_LodUnits.Empty();
-		for (AActor* Actor : Level->Actors)
+		AI_LodLevelCollection = NewObject<UXD_AI_LodLevelCollection>(Level);
+		Level->AddAssetUserData(AI_LodLevelCollection);
+	}
+
+	TArray<UXD_AI_LodUnitBase*> WorldInitAI_LodUnits;
+	TArray<UXD_AI_LodUnitBase*> LevelInitAI_LodUnits;
+	for (AActor* Actor : Level->Actors)
+	{
+		if (Actor && Actor->Implements<UXD_AI_LodInstanceInterface>())
 		{
-			if (Actor && Actor->Implements<UXD_AI_LodInstanceInterface>())
+			switch (IXD_AI_LodInstanceInterface::GetRegisterType(Actor))
 			{
-				UXD_AI_LodUnitBase* AI_LodUnit = IXD_AI_LodInstanceInterface::CreateAI_LodUnit(Actor, AI_LodWorldCollection);
-				AI_LodUnits.Add(AI_LodUnit);
+			case EAI_LodSystemRegisterType::LevelInit:
+			{
+				if (AI_LodLevelCollection->AI_LodLevelBuiltData == nullptr)
+				{
+					FString PackageName = Level->GetOutermost()->GetName() + TEXT("_AI_LodBuiltData");
+					UPackage* BuiltDataPackage = CreatePackage(nullptr, *PackageName);
+					// PKG_ContainsMapData required so FEditorFileUtils::GetDirtyContentPackages can treat this as a map package
+					BuiltDataPackage->SetPackageFlags(PKG_ContainsMapData);
+					FName ShortPackageName = FPackageName::GetShortFName(BuiltDataPackage->GetFName());
+					// Top level UObjects have to have both RF_Standalone and RF_Public to be saved into packages
+					AI_LodLevelCollection->AI_LodLevelBuiltData = NewObject<UXD_AI_LodLevelBuiltData>(BuiltDataPackage, ShortPackageName, RF_Standalone | RF_Public);
+					// MarkPackageDirty();
+				}
+				UXD_AI_LodUnitBase* AI_LodUnit = IXD_AI_LodInstanceInterface::CreateAI_LodUnit(Actor, AI_LodLevelCollection->AI_LodLevelBuiltData);
+				WorldInitAI_LodUnits.Add(AI_LodUnit);
+				break;
+			}
+			case EAI_LodSystemRegisterType::WorldInit:
+			{
+				UXD_AI_LodUnitBase* AI_LodUnit = IXD_AI_LodInstanceInterface::CreateAI_LodUnit(Actor, AI_LodLevelCollection);
+				LevelInitAI_LodUnits.Add(AI_LodUnit);
+				break;
+			}
+			default:
+				check(0);
+				break;
 			}
 		}
-
-		AI_LodWorldCollection->Modify();
-		AI_LodWorldCollection->MarkPackageDirty();
-
-		XD_AI_LodSystem_Display_LOG("刷新关卡[%s]的AI_LodUnit配置", *LevelFullName.ToString());
 	}
-	else
-	{
-		XD_AI_LodSystem_Warning_LOG("未配置XD_AI_LodSystemSettings中的AI_LodWorldCollection");
-	}
+
+	AI_LodLevelCollection->AI_LodUnits = LevelInitAI_LodUnits;
+	AI_LodLevelCollection->AI_LodLevelBuiltData->AI_LodUnits = WorldInitAI_LodUnits;
+	AI_LodLevelCollection->AI_LodLevelBuiltData->MarkPackageDirty();
+
+	FName LevelName = FAI_LodSystemUtils::GetLevelName(Level);
+	XD_AI_LodSystem_Display_LOG("刷新关卡[%s]的AI_LodUnit配置", *LevelName.ToString());
 }
 
 #undef LOCTEXT_NAMESPACE

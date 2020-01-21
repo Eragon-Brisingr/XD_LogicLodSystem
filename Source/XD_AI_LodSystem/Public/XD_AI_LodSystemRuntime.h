@@ -35,6 +35,7 @@ public:
 	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
 private:
 	void InitAI_LodSystem();
+	void WhenLevelInited(ULevel* Level);
 	void WhenLevelLoaded(ULevel* Level);
 	void WhenLevelPreUnload(ULevel* Level);
 

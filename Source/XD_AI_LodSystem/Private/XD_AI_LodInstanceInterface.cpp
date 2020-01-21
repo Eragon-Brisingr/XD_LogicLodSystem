@@ -6,6 +6,10 @@
 
 UXD_AI_LodUnitBase* IXD_AI_LodInstanceInterface::CreateAI_LodUnit(AActor* Actor, UObject* Outer)
 {
+#if WITH_EDITOR
+	FEditorScriptExecutionGuard ScriptGuard;
+#endif
+
 	UXD_AI_LodUnitBase* AI_LodUnit = Execute_CreateAI_LodUnit((UObject*)Actor, Outer);
 	AI_LodUnit->AI_Instance = Actor;
 	return AI_LodUnit;

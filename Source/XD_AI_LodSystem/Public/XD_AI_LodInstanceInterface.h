@@ -8,6 +8,15 @@
 
 class UXD_AI_LodUnitBase;
 
+UENUM()
+enum class EAI_LodSystemRegisterType : uint8
+{
+	// 关卡初始化时模拟
+	LevelInit,
+	// 世界初始化时模拟
+	WorldInit
+};
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UXD_AI_LodInstanceInterface : public UInterface
@@ -28,6 +37,11 @@ public:
 	UXD_AI_LodUnitBase* CreateAI_LodUnit(UObject* Outer) const;
 	virtual UXD_AI_LodUnitBase* CreateAI_LodUnit_Implementation(UObject* Outer) const { return nullptr; }
 	static UXD_AI_LodUnitBase* CreateAI_LodUnit(AActor* Actor, UObject* Outer);
+
+	UFUNCTION(BlueprintnativeEvent, Category = "AI|Lod")
+	EAI_LodSystemRegisterType GetRegisterType() const;
+	virtual EAI_LodSystemRegisterType GetRegisterType_Implementation() const { return EAI_LodSystemRegisterType::LevelInit; }
+	static EAI_LodSystemRegisterType GetRegisterType(AActor* Actor) { return Execute_GetRegisterType((UObject*)Actor); }
 
 	UFUNCTION(BlueprintnativeEvent, Category = "AI|Lod")
 	void SyncToInstance(const UXD_AI_LodUnitBase* AI_LodUnit);
