@@ -60,7 +60,7 @@ void FXD_AI_LodSystem_EditorModule::CollectAI_LodUnit(UWorld* World)
 {
 	const UXD_AI_LodSystemSettings* AI_LodSystemSettings = GetDefault<UXD_AI_LodSystemSettings>();
 	ULevel* Level = World->GetCurrentLevel();
-	if (AI_LodSystemSettings->ValidLevelPattern.Len() > 0 && FRegexMatcher(AI_LodSystemSettings->ValidLevelPattern, Level->GetPathName()).FindNext() == false)
+	if (AI_LodSystemSettings->ValidLevelPattern.Len() > 0 && FRegexMatcher(AI_LodSystemSettings->ValidLevelPattern, Level->GetOutermost()->GetPathName()).FindNext() == false)
 	{
 		return;
 	}

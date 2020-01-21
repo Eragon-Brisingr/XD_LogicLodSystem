@@ -17,7 +17,7 @@ class XD_AI_LODSYSTEM_API UXD_AI_LodUnitBase : public UObject
 	friend class UXD_AI_LodSystemRuntime;
 	friend class IXD_AI_LodInstanceInterface;
 public:
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TSoftObjectPtr<AActor> AI_Instance;
 
 protected:

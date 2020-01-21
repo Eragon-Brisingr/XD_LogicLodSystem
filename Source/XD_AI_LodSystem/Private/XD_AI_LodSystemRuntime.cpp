@@ -25,12 +25,43 @@ UXD_AI_LodSystemRuntime::UXD_AI_LodSystemRuntime()
 
 void UXD_AI_LodSystemRuntime::WhenGameInit_Implementation()
 {
-	InitAI_LodSystem();
+	XD_AI_LodSystem_Display_LOG("初始化AI_LodSystem");
+	{
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+		IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+		TArray<FAssetData> AI_LodLevelBuiltDataAssets;
+		AssetRegistry.GetAssetsByClass(UXD_AI_LodLevelBuiltData::StaticClass()->GetFName(), AI_LodLevelBuiltDataAssets);
+		const UXD_AI_LodSystemSettings* AI_LodSystemSettings = GetDefault<UXD_AI_LodSystemSettings>();
+		for (const FAssetData& AI_LodLevelBuiltDataAsset : AI_LodLevelBuiltDataAssets)
+		{
+			UXD_AI_LodLevelBuiltData* AI_LodLevelBuiltData = CastChecked<UXD_AI_LodLevelBuiltData>(AI_LodLevelBuiltDataAsset.GetAsset());
+			if (AI_LodSystemSettings->ValidLevelPattern.Len() > 0 && FRegexMatcher(AI_LodSystemSettings->ValidLevelPattern, AI_LodLevelBuiltDataAsset.PackageName.ToString()).FindNext() == false)
+			{
+				continue;
+			}
+			FString LevelName = FPackageName::GetShortFName(AI_LodLevelBuiltData->GetOutermost()->GetName()).ToString();
+			// 11为_AI_LodData的长度
+			constexpr int32 Len_AI_LodData = 11;
+			LevelName = LevelName.Left(LevelName.Len() - Len_AI_LodData);
+			FXD_AI_LodLevelUnit& AI_LodLevelUnit = AI_LodLevelUnits.Add(*LevelName);
+			AI_LodLevelUnit.SavedWorldOrigin = AI_LodLevelBuiltData->SavedWorldOrigin;
+			for (UXD_AI_LodUnitBase* AI_LodUnitTemplate : AI_LodLevelBuiltData->AI_LodUnits)
+			{
+				UXD_AI_LodUnitBase* AI_LodUnit = ::DuplicateObject(AI_LodUnitTemplate, this, AI_LodUnitTemplate->GetFName());
+				AI_LodUnit->ClearFlags(RF_WasLoaded | RF_LoadCompleted);
+				AI_LodUnit->LodSystemRuntime = this;
+				AI_LodLevelUnit.AI_LodUnits.Add(AI_LodUnit);
+			}
+			XD_AI_LodSystem_Display_LOG("  注册关卡[%s]进AI_Lod系统", *LevelName);
+		}
+	}
+
+	RegisterAI_LodSystem();
 }
 
 void UXD_AI_LodSystemRuntime::WhenPostLoad_Implementation()
 {
-	InitAI_LodSystem();
+	RegisterAI_LodSystem();
 }
 
 void UXD_AI_LodSystemRuntime::BeginPlay()
@@ -65,7 +96,7 @@ void UXD_AI_LodSystemRuntime::TickComponent(float DeltaTime, enum ELevelTick Tic
 	for (TPair<FName, FXD_AI_LodLevelUnit>& Pair : AI_LodLevelUnits)
 	{
 		FXD_AI_LodLevelUnit& AI_LodLevelUnit = Pair.Value;
-		if (AI_LodLevelUnit.bIsLevelLoaded == false)
+		if (AI_LodLevelUnit.bIsLevelLoaded)
 		{
 			for (UXD_AI_LodUnitBase* AI_LodUnit : AI_LodLevelUnit.AI_LodUnits)
 			{
@@ -75,45 +106,17 @@ void UXD_AI_LodSystemRuntime::TickComponent(float DeltaTime, enum ELevelTick Tic
 	}
 }
 
-void UXD_AI_LodSystemRuntime::InitAI_LodSystem()
+void UXD_AI_LodSystemRuntime::RegisterAI_LodSystem()
 {
 	UWorld* World = GetWorld();
-
-	XD_AI_LodSystem_Display_LOG("初始化AI_LodSystem");
-	{
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-		IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
-		TArray<FAssetData> AI_LodLevelBuiltDataAssets;
-		AssetRegistry.GetAssetsByClass(UXD_AI_LodLevelBuiltData::StaticClass()->GetFName(), AI_LodLevelBuiltDataAssets);
-		const UXD_AI_LodSystemSettings* AI_LodSystemSettings = GetDefault<UXD_AI_LodSystemSettings>();
-		for (const FAssetData& AI_LodLevelBuiltDataAsset : AI_LodLevelBuiltDataAssets)
-		{
-			UXD_AI_LodLevelBuiltData* AI_LodLevelBuiltData = CastChecked<UXD_AI_LodLevelBuiltData>(AI_LodLevelBuiltDataAsset.GetAsset());
-			if (AI_LodSystemSettings->ValidLevelPattern.Len() > 0 && FRegexMatcher(AI_LodSystemSettings->ValidLevelPattern, AI_LodLevelBuiltDataAsset.PackagePath.ToString()).FindNext() == false)
-			{
-				continue;
-			}
-			FString LevelName = FPackageName::GetShortFName(AI_LodLevelBuiltData->GetOutermost()->GetName()).ToString();
-			// 17为_AI_LodBuiltData的长度
-			constexpr int32 Len_AI_LodData = 17;
-			LevelName = LevelName.Left(LevelName.Len() - Len_AI_LodData + 1);
-			FXD_AI_LodLevelUnit& AI_LodLevelUnit = AI_LodLevelUnits.Add(*LevelName);
-			AI_LodLevelUnit.SavedWorldOrigin = AI_LodLevelBuiltData->SavedWorldOrigin;
-			for (UXD_AI_LodUnitBase* AI_LodUnitTemplate : AI_LodLevelBuiltData->AI_LodUnits)
-			{
-				UXD_AI_LodUnitBase* AI_LodUnit = ::DuplicateObject(AI_LodUnitTemplate, this, AI_LodUnitTemplate->GetFName());
-				AI_LodUnit->LodSystemRuntime = this;
-				AI_LodLevelUnit.AI_LodUnits.Add(AI_LodUnit);
-			}
-			XD_AI_LodSystem_Display_LOG("  注册关卡[%s]进AI_Lod系统", *LevelName);
-		}
-	}
 
 	UXD_SaveGameSystemBase* SaveGameSystem = UXD_SaveGameSystemBase::Get(this);
 	SaveGameSystem->OnInitLevelCompleted.AddUObject(this, &UXD_AI_LodSystemRuntime::WhenLevelInited);
 	SaveGameSystem->OnLoadLevelCompleted.AddUObject(this, &UXD_AI_LodSystemRuntime::WhenLevelLoaded);
 	SaveGameSystem->OnPreLevelUnload.AddUObject(this, &UXD_AI_LodSystemRuntime::WhenLevelPreUnload);
 	OnActorSpawnedHandler = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &UXD_AI_LodSystemRuntime::WhenActorSpawned));
+
+	XD_AI_LodSystem_Display_LOG("AI_LodSystem完成注册");
 }
 
 void UXD_AI_LodSystemRuntime::WhenLevelInited(ULevel* Level)
@@ -134,6 +137,7 @@ void UXD_AI_LodSystemRuntime::WhenLevelInited(ULevel* Level)
 		for (UXD_AI_LodUnitBase* AI_LodUnitTemplate : AI_LodLevelCollection->AI_LodUnits)
 		{
 			UXD_AI_LodUnitBase* AI_LodUnit = ::DuplicateObject(AI_LodUnitTemplate, this, AI_LodUnitTemplate->GetFName());
+			AI_LodUnit->ClearFlags(RF_WasLoaded | RF_LoadCompleted);
 			AI_LodUnit->LodSystemRuntime = this;
 			AI_LodLevelUnit.AI_LodUnits.Add(AI_LodUnit);
 		}

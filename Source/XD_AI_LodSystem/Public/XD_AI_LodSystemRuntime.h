@@ -14,10 +14,10 @@ struct XD_AI_LODSYSTEM_API FXD_AI_LodLevelUnit
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, SaveGame)
 	TArray<UXD_AI_LodUnitBase*> AI_LodUnits;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, SaveGame)
 	FIntVector SavedWorldOrigin;
 
 	uint8 bIsLevelLoaded : 1;
@@ -39,7 +39,7 @@ public:
 
 	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
 private:
-	void InitAI_LodSystem();
+	void RegisterAI_LodSystem();
 	void WhenLevelInited(ULevel* Level);
 	void WhenLevelLoaded(ULevel* Level);
 	void SyncLevelUnitToInstance(ULevel* Level, bool IsInit);
