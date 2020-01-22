@@ -39,7 +39,7 @@ public:
 	static UXD_LogicLodUnitBase* CreateLogicLodUnit(AActor* Actor, UObject* Outer);
 
 	UFUNCTION(BlueprintnativeEvent, Category = "AI|Lod")
-	ELogicLodSystemRegisterType GetRegisterType() const;
-	virtual ELogicLodSystemRegisterType GetRegisterType_Implementation() const { return ELogicLodSystemRegisterType::LevelInit; }
-	static ELogicLodSystemRegisterType GetRegisterType(AActor* Actor) { return Execute_GetRegisterType((UObject*)Actor); }
+	ELogicLodSystemRegisterType GetLogicLodRegisterType() const;
+	virtual ELogicLodSystemRegisterType GetLogicLodRegisterType_Implementation() const { return ELogicLodSystemRegisterType::LevelInit; }
+	static ELogicLodSystemRegisterType GetLogicLodRegisterType(AActor* Actor) { return Execute_GetLogicLodRegisterType((UObject*)Actor); }
 };

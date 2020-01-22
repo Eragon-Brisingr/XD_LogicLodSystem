@@ -85,7 +85,7 @@ void FXD_LogicLodSystem_EditorModule::CollectLogicLodUnit(UWorld* World)
 	{
 		if (Actor && Actor->Implements<UXD_LogicLodInstanceInterface>())
 		{
-			switch (IXD_LogicLodInstanceInterface::GetRegisterType(Actor))
+			switch (IXD_LogicLodInstanceInterface::GetLogicLodRegisterType(Actor))
 			{
 			case ELogicLodSystemRegisterType::LevelInit:
 			{

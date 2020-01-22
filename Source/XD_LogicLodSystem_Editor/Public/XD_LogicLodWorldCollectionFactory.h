@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class XD_LogicLodSYSTEM_EDITOR_API UXD_LogicLodWorldCollectionFactory : public UFactory
+class XD_LOGICLODSYSTEM_EDITOR_API UXD_LogicLodWorldCollectionFactory : public UFactory
 {
 	GENERATED_BODY()
 public:

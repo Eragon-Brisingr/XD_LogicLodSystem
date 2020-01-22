@@ -40,8 +40,8 @@ void UXD_LogicLodSystemRuntime::WhenGameInit_Implementation()
 				continue;
 			}
 			FString LevelName = FPackageName::GetShortFName(LogicLodLevelBuiltData->GetOutermost()->GetName()).ToString();
-			// 11为_LogicLodData的长度
-			constexpr int32 Len_LogicLodData = 11;
+			// 13为_LogicLodData的长度
+			constexpr int32 Len_LogicLodData = 13;
 			LevelName = LevelName.Left(LevelName.Len() - Len_LogicLodData);
 			UXD_LogicLodLevelUnit*& LogicLodLevelUnit = LogicLodLevelUnits.Add(*LevelName);
 			LogicLodLevelUnit = NewObject<UXD_LogicLodLevelUnit>(this, GetDefault<UXD_LogicLodSystemSettings>()->LogicLodLevelUnitClass.LoadSynchronous(), *LevelName);
@@ -196,7 +196,7 @@ void UXD_LogicLodSystemRuntime::SyncLevelUnitToInstance(ULevel* Level, bool IsIn
 		{
 			LogicLodUnit->SyncToInstance(Level, IsInit);
 			AActor* Instance = LogicLodUnit->AI_Instance.Get();
-			check(Instance);
+			check(Instance && !Instance->OnDestroyed.Contains(this, GET_FUNCTION_NAME_CHECKED(UXD_LogicLodSystemRuntime, WhenInstanceDestroyed)));
 			Instance->OnDestroyed.AddDynamic(this, &UXD_LogicLodSystemRuntime::WhenInstanceDestroyed);
 		}
 	}
@@ -240,7 +240,7 @@ void UXD_LogicLodSystemRuntime::WhenActorSpawned(AActor* Actor)
 		if (LogicLodLevelUnit->bIsLevelLoaded)
 		{
 			check(!LogicLodLevelUnit->LogicLodUnits.ContainsByPredicate([&](UXD_LogicLodUnitBase* E) {return E->AI_Instance.Get() == Actor; }));
-			UXD_LogicLodUnitBase* LogicLodUnit = IXD_LogicLodInstanceInterface::CreateLogicLodUnit(Actor, this);
+			UXD_LogicLodUnitBase* LogicLodUnit = IXD_LogicLodInstanceInterface::CreateLogicLodUnit(Actor, LogicLodLevelUnit);
 			LogicLodUnit->LogicLodLevelUnit = LogicLodLevelUnit;
 			LogicLodLevelUnit->LogicLodUnits.Add(LogicLodUnit);
 			XD_LogicLodSystem_Display_LOG("AI实例[%s]实例化，自动注册进LogicLod系统的关卡[%s]", *Actor->GetName(), *LevelName.ToString());
@@ -261,7 +261,7 @@ void UXD_LogicLodSystemRuntime::WhenInstanceDestroyed(AActor* Actor)
 
 UXD_LogicLodUnitBase* UXD_LogicLodSystemRuntime::DuplicateLogicLodUnit(UXD_LogicLodUnitBase* LogicLodUnitTemplate, UXD_LogicLodLevelUnit* LogicLodLevelUnit)
 {
-	UXD_LogicLodUnitBase* LogicLodUnit = ::DuplicateObject(LogicLodUnitTemplate, this, LogicLodUnitTemplate->GetFName());
+	UXD_LogicLodUnitBase* LogicLodUnit = ::DuplicateObject(LogicLodUnitTemplate, LogicLodLevelUnit, LogicLodUnitTemplate->GetFName());
 	LogicLodUnit->ClearFlags(RF_WasLoaded | RF_LoadCompleted);
 #if WITH_EDITOR
 	// 编辑器下修复SoftObject运行时的指向

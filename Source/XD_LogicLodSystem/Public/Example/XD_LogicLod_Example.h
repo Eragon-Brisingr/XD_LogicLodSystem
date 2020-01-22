@@ -40,7 +40,7 @@ public:
 	void Tick(float DeltaTime) override;
 
 	UXD_LogicLodUnitBase* CreateLogicLodUnit_Implementation(UObject* Outer) const override;
-	ELogicLodSystemRegisterType GetRegisterType_Implementation() const override { return ELogicLodSystemRegisterType::WorldInit; }
+	ELogicLodSystemRegisterType GetLogicLodRegisterType_Implementation() const override { return ELogicLodSystemRegisterType::WorldInit; }
 
 	UPROPERTY(VisibleAnywhere, SaveGame, BlueprintReadOnly)
 	float AI_SyncValue;
