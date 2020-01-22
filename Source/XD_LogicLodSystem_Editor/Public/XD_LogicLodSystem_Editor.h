@@ -4,7 +4,7 @@
 
 #include <Modules/ModuleManager.h>
 
-class FXD_AI_LodSystem_EditorModule : public IModuleInterface
+class FXD_LogicLodSystem_EditorModule : public IModuleInterface
 {
 public:
 
@@ -15,6 +15,6 @@ public:
 
 private:
 	FDelegateHandle PostSaveWorldHandle;
-	void CollectAI_LodUnit(UWorld* World);
+	void CollectLogicLodUnit(UWorld* World);
 
 };

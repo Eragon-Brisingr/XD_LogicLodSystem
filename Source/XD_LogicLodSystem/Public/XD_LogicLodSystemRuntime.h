@@ -5,41 +5,29 @@
 #include "CoreMinimal.h"
 #include <Components/ActorComponent.h>
 #include "XD_SaveGameInterface.h"
-#include "XD_AI_LodSystemRuntime.generated.h"
+#include "XD_LogicLodSystemRuntime.generated.h"
 
-class UXD_AI_LodUnitBase;
-
-USTRUCT()
-struct XD_AI_LODSYSTEM_API FXD_AI_LodLevelUnit
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(VisibleAnywhere, SaveGame)
-	TArray<UXD_AI_LodUnitBase*> AI_LodUnits;
-
-	UPROPERTY(VisibleAnywhere, SaveGame)
-	FIntVector SavedWorldOrigin;
-
-	uint8 bIsLevelLoaded : 1;
-};
+class UXD_LogicLodUnitBase;
+class UXD_LogicLodLevelUnit;
 
 UCLASS()
-class XD_AI_LODSYSTEM_API UXD_AI_LodSystemRuntime : public UActorComponent,
+class XD_LOGICLODSYSTEM_API UXD_LogicLodSystemRuntime : public UActorComponent,
 	public IXD_SaveGameInterface
 {
 	GENERATED_BODY()
 public:
-	UXD_AI_LodSystemRuntime();
+	UXD_LogicLodSystemRuntime();
 
 	void WhenGameInit_Implementation() override;
 	void WhenPostLoad_Implementation() override;
+	void WhenPreSave_Implementation() override;
 
 	void BeginPlay() override;
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
 private:
-	void RegisterAI_LodSystem();
+	void RegisterLogicLodSystem();
 	void WhenLevelInited(ULevel* Level);
 	void WhenLevelLoaded(ULevel* Level);
 	void SyncLevelUnitToInstance(ULevel* Level, bool IsInit);
@@ -52,8 +40,9 @@ private:
 	void WhenInstanceDestroyed(AActor* Actor);
 
 	UPROPERTY(EditAnywhere, SaveGame)
-	TMap<FName, FXD_AI_LodLevelUnit> AI_LodLevelUnits;
+	TMap<FName, UXD_LogicLodLevelUnit*> LogicLodLevelUnits;
 
+	UXD_LogicLodUnitBase* DuplicateLogicLodUnit(UXD_LogicLodUnitBase* LogicLodUnitTemplate, UXD_LogicLodLevelUnit* LogicLodLevelUnit);
 public:
 	FORCEINLINE bool IsServer() const { return GetOwner()->HasAuthority(); }
 

@@ -1,16 +1,16 @@
 ﻿// Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
 
-#include "XD_AI_LodSystem.h"
+#include "XD_LogicLodSystem.h"
 
-#define LOCTEXT_NAMESPACE "XD_AI_LodSystem"
+#define LOCTEXT_NAMESPACE "XD_LogicLodSystem"
 
-void FXD_AI_LodSystemModule::StartupModule()
+void FXD_LogicLodSystemModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	
 }
 
-void FXD_AI_LodSystemModule::ShutdownModule()
+void FXD_LogicLodSystemModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
@@ -19,4 +19,4 @@ void FXD_AI_LodSystemModule::ShutdownModule()
 
 #undef LOCTEXT_NAMESPACE
 	
-IMPLEMENT_MODULE(FXD_AI_LodSystemModule, XD_AI_LodSystem)
+IMPLEMENT_MODULE(FXD_LogicLodSystemModule, XD_LogicLodSystem)

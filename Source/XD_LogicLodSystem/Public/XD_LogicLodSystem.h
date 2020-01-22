@@ -4,7 +4,7 @@
 
 #include <Modules/ModuleManager.h>
 
-class FXD_AI_LodSystemModule : public IModuleInterface
+class FXD_LogicLodSystemModule : public IModuleInterface
 {
 public:
 

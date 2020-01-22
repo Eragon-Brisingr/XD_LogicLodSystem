@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "XD_AI_LodSystem_Log.h"
+#include "XD_LogicLodSystem_Log.h"
 
-DEFINE_LOG_CATEGORY(XD_AI_LodSystem_Log);
+DEFINE_LOG_CATEGORY(XD_LogicLodSystem_Log);

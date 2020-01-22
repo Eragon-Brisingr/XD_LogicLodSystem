@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include <Factories/Factory.h>
-#include "XD_AI_LodWorldCollectionFactory.generated.h"
+#include "XD_LogicLodWorldCollectionFactory.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class XD_AI_LODSYSTEM_EDITOR_API UXD_AI_LodWorldCollectionFactory : public UFactory
+class XD_LogicLodSYSTEM_EDITOR_API UXD_LogicLodWorldCollectionFactory : public UFactory
 {
 	GENERATED_BODY()
 public:
-	UXD_AI_LodWorldCollectionFactory();
+	UXD_LogicLodWorldCollectionFactory();
 
 	UObject* FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
 
