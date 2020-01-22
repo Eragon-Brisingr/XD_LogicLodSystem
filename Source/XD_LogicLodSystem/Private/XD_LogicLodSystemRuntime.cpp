@@ -14,7 +14,7 @@
 #include "XD_LogicLodUnitBase.h"
 #include "XD_LogicLodInstanceInterface.h"
 #include "XD_SaveGameSystemBase.h"
-#include "XD_LogicLodSystem_Log.h"
+#include "XD_LogicLodSystem_Utils.h"
 
 #define LOCTEXT_NAMESPACE "XD_LogicLodSystem"
 
@@ -103,10 +103,12 @@ void UXD_LogicLodSystemRuntime::EndPlay(const EEndPlayReason::Type EndPlayReason
 	World->RemoveOnActorSpawnedHandler(OnActorSpawnedHandler);
 }
 
+DECLARE_CYCLE_STAT(TEXT("LogicLodUpdate"), STAT_LogicLodUpdate, STATGROUP_LOGIC_LOD);
 void UXD_LogicLodSystemRuntime::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	SCOPE_CYCLE_COUNTER(STAT_LogicLodUpdate);
 	for (TPair<FName, UXD_LogicLodLevelUnit*>& Pair : LogicLodLevelUnits)
 	{
 		UXD_LogicLodLevelUnit* LogicLodLevelUnit = Pair.Value;

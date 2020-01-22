@@ -16,3 +16,5 @@ XD_LOGICLODSYSTEM_API DECLARE_LOG_CATEGORY_EXTERN(XD_LogicLodSystem_Log, Log, Al
 #define XD_LogicLodSystem_Display_VLog(LogOwner, FMT, ...) UE_VLOG(LogOwner, XD_LogicLodSystem_Log, Display, TEXT(FMT), ##__VA_ARGS__)
 #define XD_LogicLodSystem_Warning_VLog(LogOwner, FMT, ...) UE_VLOG(LogOwner, XD_LogicLodSystem_Log, Warning, TEXT(FMT), ##__VA_ARGS__)
 #define XD_LogicLodSystem_Error_VLog(LogOwner, FMT, ...) UE_VLOG(LogOwner, XD_LogicLodSystem_Log, Error, TEXT(FMT), ##__VA_ARGS__)
+
+XD_LOGICLODSYSTEM_API DECLARE_STATS_GROUP(TEXT("LogicLod"), STATGROUP_LOGIC_LOD, STATCAT_Advanced);

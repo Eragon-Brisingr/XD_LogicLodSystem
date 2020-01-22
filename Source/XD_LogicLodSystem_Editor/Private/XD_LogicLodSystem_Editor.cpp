@@ -10,7 +10,7 @@
 #include "XD_LogicLodInstanceInterface.h"
 #include "XD_LogicLodWorldCollection.h"
 #include "XD_LogicLodSystemSettings.h"
-#include "XD_LogicLodSystem_Log.h"
+#include "XD_LogicLodSystem_Utils.h"
 
 #define LOCTEXT_NAMESPACE "FXD_LogicLodSystem_EditorModule"
 
