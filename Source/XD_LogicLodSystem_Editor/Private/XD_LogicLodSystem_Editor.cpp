@@ -6,6 +6,7 @@
 #include <Modules/ModuleManager.h>
 #include <ISettingsModule.h>
 #include <Internationalization/Regex.h>
+#include <AssetRegistryModule.h>
 
 #include "XD_LogicLodInstanceInterface.h"
 #include "XD_LogicLodWorldCollection.h"
@@ -74,7 +75,6 @@ void FXD_LogicLodSystem_EditorModule::CollectLogicLodUnit(UWorld* World)
 	if (LogicLodLevelCollection == nullptr)
 	{
 		LogicLodLevelCollection = NewObject<UXD_LogicLodLevelCollection>(Level);
-		Level->AddAssetUserData(LogicLodLevelCollection);
 	}
 
 	LogicLodLevelCollection->SavedWorldOrigin = World->OriginLocation;
@@ -91,14 +91,17 @@ void FXD_LogicLodSystem_EditorModule::CollectLogicLodUnit(UWorld* World)
 			{
 				if (LogicLodLevelCollection->LogicLodLevelBuiltData == nullptr)
 				{
-					FString PackageName = Level->GetOutermost()->GetName() + TEXT("_LogicLodData");
-					UPackage* BuiltDataPackage = CreatePackage(nullptr, *PackageName);
+					const FString PackagePath = Level->GetOutermost()->GetName() + TEXT("_LogicLodData");
+					UPackage* BuiltDataPackage = CreatePackage(nullptr, *PackagePath);
 					// PKG_ContainsMapData required so FEditorFileUtils::GetDirtyContentPackages can treat this as a map package
 					BuiltDataPackage->SetPackageFlags(PKG_ContainsMapData);
 					FName ShortPackageName = FPackageName::GetShortFName(BuiltDataPackage->GetFName());
 					// Top level UObjects have to have both RF_Standalone and RF_Public to be saved into packages
-					LogicLodLevelCollection->LogicLodLevelBuiltData = NewObject<UXD_LogicLodLevelBuiltData>(BuiltDataPackage, ShortPackageName, RF_Standalone | RF_Public);
-					LogicLodLevelCollection->LogicLodLevelBuiltData->SavedWorldOrigin = World->OriginLocation;
+					UXD_LogicLodLevelBuiltData* LogicLodLevelBuiltData = NewObject<UXD_LogicLodLevelBuiltData>(BuiltDataPackage, ShortPackageName, RF_Standalone | RF_Public);
+					LogicLodLevelCollection->LogicLodLevelBuiltData = LogicLodLevelBuiltData;
+					LogicLodLevelBuiltData->SavedWorldOrigin = World->OriginLocation;
+
+					FAssetRegistryModule::AssetCreated(LogicLodLevelBuiltData);
 				}
 				UXD_LogicLodUnitBase* LogicLodUnit = IXD_LogicLodInstanceInterface::CreateLogicLodUnit(Actor, LogicLodLevelCollection->LogicLodLevelBuiltData);
 				WorldInitLogicLodUnits.Add(LogicLodUnit);
@@ -122,6 +125,15 @@ void FXD_LogicLodSystem_EditorModule::CollectLogicLodUnit(UWorld* World)
 	{
 		LogicLodLevelCollection->LogicLodLevelBuiltData->LogicLodUnits = WorldInitLogicLodUnits;
 		LogicLodLevelCollection->LogicLodLevelBuiltData->MarkPackageDirty();
+	}
+
+	if (LevelInitLogicLodUnits.Num() > 0 || LogicLodLevelCollection->LogicLodLevelBuiltData != nullptr)
+	{
+		Level->AddAssetUserData(LogicLodLevelCollection);
+	}
+	else
+	{
+		Level->RemoveUserDataOfClass(UXD_LogicLodLevelCollection::StaticClass());
 	}
 
 	FName LevelName = FLogicLodSystemUtils::GetLevelName(Level);
