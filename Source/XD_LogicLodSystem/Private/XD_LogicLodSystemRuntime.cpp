@@ -234,7 +234,7 @@ void UXD_LogicLodSystemRuntime::WhenActorSpawned(AActor* Actor)
 	{
 		ULevel* Level = Actor->GetLevel();
 		FName LevelName = FLogicLodSystemUtils::GetLevelName(Level);
-		UXD_LogicLodLevelUnit* LogicLodLevelUnit = LogicLodLevelUnits.FindOrAdd(LevelName);
+		UXD_LogicLodLevelUnit*& LogicLodLevelUnit = LogicLodLevelUnits.FindOrAdd(LevelName);
 		if (LogicLodLevelUnit == nullptr)
 		{
 			LogicLodLevelUnit = NewObject<UXD_LogicLodLevelUnit>(this, GetDefault<UXD_LogicLodSystemSettings>()->LogicLodLevelUnitClass.LoadSynchronous(), LevelName);
