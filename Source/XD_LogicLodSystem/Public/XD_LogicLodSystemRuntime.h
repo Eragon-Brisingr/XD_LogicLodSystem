@@ -4,23 +4,22 @@
 
 #include "CoreMinimal.h"
 #include <Components/ActorComponent.h>
-#include "XD_SaveGameInterface.h"
+#include "GameSerializerInterface.h"
 #include "XD_LogicLodSystemRuntime.generated.h"
 
 class UXD_LogicLodUnitBase;
 class UXD_LogicLodLevelUnit;
 
 UCLASS()
-class XD_LOGICLODSYSTEM_API UXD_LogicLodSystemRuntime : public UActorComponent,
-	public IXD_SaveGameInterface
+class XD_LOGICLODSYSTEM_API UXD_LogicLodSystemRuntime : public UActorComponent, public IComponentGameSerializerInterface
 {
 	GENERATED_BODY()
 public:
 	UXD_LogicLodSystemRuntime();
 
 	void WhenGameInit_Implementation() override;
-	void WhenPostLoad_Implementation() override;
-	void WhenPreSave_Implementation() override;
+	void WhenGamePostLoad_Implementation(const FGameSerializerExtendDataContainer& ExtendData) override;
+	FGameSerializerExtendDataContainer WhenGamePreSave_Implementation() override;
 
 	void BeginPlay() override;
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -32,7 +31,7 @@ private:
 	void WhenLevelLoaded(ULevel* Level);
 	void SyncLevelUnitToInstance(ULevel* Level, bool IsInit);
 
-	void WhenLevelPreUnload(ULevel* Level);
+	void WhenLevelPreSave(ULevel* Level);
 
 	FDelegateHandle OnActorSpawnedHandler;
 	void WhenActorSpawned(AActor* Actor);

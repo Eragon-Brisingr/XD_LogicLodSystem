@@ -46,7 +46,7 @@ public class XD_LogicLodSystem : ModuleRules
                 "GameplayTags",
                 "NavigationSystem",
 
-                "XD_SaveGameSystem",
+				"GameSerializer",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

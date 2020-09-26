@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "XD_LogicLodUnitBase.h"
 #include "XD_LogicLodInstanceInterface.h"
-#include "XD_SaveGameInterface.h"
+#include "GameSerializerInterface.h"
 #include "XD_LogicLod_Example.generated.h"
 
 UCLASS()
@@ -23,7 +23,7 @@ public:
 };
 
 UCLASS()
-class XD_LOGICLODSYSTEM_API AXD_LogicLod_Example : public AActor, public IXD_LogicLodInstanceInterface, public IXD_SaveGameInterface
+class XD_LOGICLODSYSTEM_API AXD_LogicLod_Example : public AActor, public IXD_LogicLodInstanceInterface, public IGameSerializerInterface
 {
 	GENERATED_BODY()
 	

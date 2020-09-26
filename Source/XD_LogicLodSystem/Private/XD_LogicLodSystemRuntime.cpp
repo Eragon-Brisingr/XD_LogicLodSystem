@@ -9,11 +9,12 @@
 #include <Misc/PackageName.h>
 #include <Internationalization/Regex.h>
 
+
+#include "GameSerializerManager.h"
 #include "XD_LogicLodSystemSettings.h"
 #include "XD_LogicLodWorldCollection.h"
 #include "XD_LogicLodUnitBase.h"
 #include "XD_LogicLodInstanceInterface.h"
-#include "XD_SaveGameSystemBase.h"
 #include "XD_LogicLodSystem_Utils.h"
 
 #define LOCTEXT_NAMESPACE "XD_LogicLodSystem"
@@ -58,12 +59,12 @@ void UXD_LogicLodSystemRuntime::WhenGameInit_Implementation()
 	RegisterLogicLodSystem();
 }
 
-void UXD_LogicLodSystemRuntime::WhenPostLoad_Implementation()
+ void UXD_LogicLodSystemRuntime::WhenGamePostLoad_Implementation(const FGameSerializerExtendDataContainer& ExtendData)
 {
 	RegisterLogicLodSystem();
 }
 
-void UXD_LogicLodSystemRuntime::WhenPreSave_Implementation()
+ FGameSerializerExtendDataContainer UXD_LogicLodSystemRuntime::WhenGamePreSave_Implementation()
 {
 	for (TPair<FName, UXD_LogicLodLevelUnit*>& Pair : LogicLodLevelUnits)
 	{
@@ -76,6 +77,7 @@ void UXD_LogicLodSystemRuntime::WhenPreSave_Implementation()
 			}
 		}
 	}
+	return FGameSerializerExtendDataContainer();
 }
 
 void UXD_LogicLodSystemRuntime::BeginPlay()
@@ -94,10 +96,10 @@ void UXD_LogicLodSystemRuntime::EndPlay(const EEndPlayReason::Type EndPlayReason
 		return;
 	}
 
-	UXD_SaveGameSystemBase* SaveGameSystem = UXD_SaveGameSystemBase::Get(this);
-	SaveGameSystem->OnLoadLevelCompleted.RemoveAll(this);
-	SaveGameSystem->OnInitLevelCompleted.RemoveAll(this);
-	SaveGameSystem->OnPreLevelUnload.RemoveAll(this);
+	UGameSerializerManager* GameSerializerManager = GetWorld()->GetGameInstance()->GetSubsystem<UGameSerializerManager>();
+	GameSerializerManager->OnLevelInitedNative.RemoveAll(this);
+	GameSerializerManager->OnLevelLoadedNative.RemoveAll(this);
+	GameSerializerManager->OnLevelPreSaveNative.RemoveAll(this);
 
 	UWorld* World = GetWorld();
 	World->RemoveOnActorSpawnedHandler(OnActorSpawnedHandler);
@@ -127,10 +129,10 @@ void UXD_LogicLodSystemRuntime::RegisterLogicLodSystem()
 {
 	UWorld* World = GetWorld();
 
-	UXD_SaveGameSystemBase* SaveGameSystem = UXD_SaveGameSystemBase::Get(this);
-	SaveGameSystem->OnInitLevelCompleted.AddUObject(this, &UXD_LogicLodSystemRuntime::WhenLevelInited);
-	SaveGameSystem->OnLoadLevelCompleted.AddUObject(this, &UXD_LogicLodSystemRuntime::WhenLevelLoaded);
-	SaveGameSystem->OnPreLevelUnload.AddUObject(this, &UXD_LogicLodSystemRuntime::WhenLevelPreUnload);
+	UGameSerializerManager* GameSerializerManager = GetWorld()->GetGameInstance()->GetSubsystem<UGameSerializerManager>();
+	GameSerializerManager->OnLevelInitedNative.AddUObject(this, &UXD_LogicLodSystemRuntime::WhenLevelInited);
+	GameSerializerManager->OnLevelLoadedNative.AddUObject(this, &UXD_LogicLodSystemRuntime::WhenLevelLoaded);
+	GameSerializerManager->OnLevelPreSaveNative.AddUObject(this, &UXD_LogicLodSystemRuntime::WhenLevelPreSave);
 	OnActorSpawnedHandler = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &UXD_LogicLodSystemRuntime::WhenActorSpawned));
 
 	XD_LogicLodSystem_Display_LOG("LogicLodSystem完成注册");
@@ -204,7 +206,7 @@ void UXD_LogicLodSystemRuntime::SyncLevelUnitToInstance(ULevel* Level, bool IsIn
 	}
 }
 
-void UXD_LogicLodSystemRuntime::WhenLevelPreUnload(ULevel* Level)
+void UXD_LogicLodSystemRuntime::WhenLevelPreSave(ULevel* Level)
 {
 	check(Level->GetWorld()->IsServer());
 
@@ -216,7 +218,7 @@ void UXD_LogicLodSystemRuntime::WhenLevelPreUnload(ULevel* Level)
 		FEditorScriptExecutionGuard ScriptGuard;
 		LogicLodLevelUnit->bIsLevelLoaded = false;
 		LogicLodLevelUnit->SavedWorldOrigin = World->OriginLocation;
-		XD_LogicLodSystem_Display_LOG("关卡[%s]将要卸载，更新的所有实例至LogicLodUnit", *LevelName.ToString());
+		XD_LogicLodSystem_Display_LOG("关卡[%s]将要保存，更新的所有实例至LogicLodUnit", *LevelName.ToString());
 
 		for (UXD_LogicLodUnitBase* LogicLodUnit : LogicLodLevelUnit->LogicLodUnits)
 		{
