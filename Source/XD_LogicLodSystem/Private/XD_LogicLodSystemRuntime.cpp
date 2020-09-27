@@ -59,8 +59,9 @@ void UXD_LogicLodSystemRuntime::WhenGameInit_Implementation()
 	RegisterLogicLodSystem();
 }
 
- void UXD_LogicLodSystemRuntime::WhenGamePostLoad_Implementation(const FGameSerializerExtendDataContainer& ExtendData)
+void UXD_LogicLodSystemRuntime::WhenGamePostLoad_Implementation(const FGameSerializerExtendDataContainer& ExtendData)
 {
+	DefaultWhenGamePostLoad(ExtendData);
 	RegisterLogicLodSystem();
 }
 
