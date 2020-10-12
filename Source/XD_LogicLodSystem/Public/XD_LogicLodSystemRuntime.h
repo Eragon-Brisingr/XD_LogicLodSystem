@@ -18,7 +18,7 @@ public:
 	UXD_LogicLodSystemRuntime();
 
 	void WhenGameInit_Implementation() override;
-	void WhenGamePostLoad_Implementation(const FGameSerializerExtendDataContainer& ExtendData) override;
+	void WhenGamePostLoad_Implementation(const FGameSerializerExtendDataContainer& ExtendData, const FGameSerializerCallRepNotifyFunc& CallRepNotifyFunc) override;
 	FGameSerializerExtendDataContainer WhenGamePreSave_Implementation() override;
 
 	void BeginPlay() override;
