@@ -99,7 +99,7 @@ void UXD_LogicLodSystemRuntime::EndPlay(const EEndPlayReason::Type EndPlayReason
 	}
 
 	UGameSerializerManager* GameSerializerManager = GetWorld()->GetGameInstance()->GetSubsystem<UGameSerializerManager>();
-	GameSerializerManager->OnLevelInitedNative.RemoveAll(this);
+	GameSerializerManager->OnLevelInitializedNative.RemoveAll(this);
 	GameSerializerManager->OnLevelLoadedNative.RemoveAll(this);
 	GameSerializerManager->OnLevelPreSaveNative.RemoveAll(this);
 
@@ -132,7 +132,7 @@ void UXD_LogicLodSystemRuntime::RegisterLogicLodSystem()
 	UWorld* World = GetWorld();
 
 	UGameSerializerManager* GameSerializerManager = GetWorld()->GetGameInstance()->GetSubsystem<UGameSerializerManager>();
-	GameSerializerManager->OnLevelInitedNative.AddUObject(this, &UXD_LogicLodSystemRuntime::WhenLevelInited);
+	GameSerializerManager->OnLevelInitializedNative.AddUObject(this, &UXD_LogicLodSystemRuntime::WhenLevelInited);
 	GameSerializerManager->OnLevelLoadedNative.AddUObject(this, &UXD_LogicLodSystemRuntime::WhenLevelLoaded);
 	GameSerializerManager->OnLevelPreSaveNative.AddUObject(this, &UXD_LogicLodSystemRuntime::WhenLevelPreSave);
 	OnActorSpawnedHandler = World->AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &UXD_LogicLodSystemRuntime::WhenActorSpawned));
