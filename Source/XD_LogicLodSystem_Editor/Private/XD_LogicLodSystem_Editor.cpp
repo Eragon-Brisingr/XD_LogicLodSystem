@@ -92,7 +92,7 @@ void FXD_LogicLodSystem_EditorModule::CollectLogicLodUnit(UWorld* World)
 				if (LogicLodLevelCollection->LogicLodLevelBuiltData == nullptr)
 				{
 					const FString PackagePath = Level->GetOutermost()->GetName() + TEXT("_LogicLodData");
-					UPackage* BuiltDataPackage = CreatePackage(nullptr, *PackagePath);
+					UPackage* BuiltDataPackage = CreatePackage(*PackagePath);
 					// PKG_ContainsMapData required so FEditorFileUtils::GetDirtyContentPackages can treat this as a map package
 					BuiltDataPackage->SetPackageFlags(PKG_ContainsMapData);
 					FName ShortPackageName = FPackageName::GetShortFName(BuiltDataPackage->GetFName());
